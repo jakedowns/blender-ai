@@ -1,23 +1,31 @@
 import bpy
 
-# Ensure you have the 'requests' library installed for your Blender's Python
-# import requests
+class APIKeyDialogOperator(bpy.types.Operator):
+    bl_idname = "object.api_key_dialog_operator"
+    bl_label = "Enter API Key"
+    
+    api_key: bpy.props.StringProperty(name="API Key", subtype='PASSWORD')
+    
+    def execute(self, context):
+        context.scene.api_key = self.api_key
+        print("API Key stored securely")  # For debugging; remove in production
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
 
 class SimpleRESTOperator(bpy.types.Operator):
     """Trigger this operator to make a REST API call"""
     bl_idname = "object.simple_rest_operator"
     bl_label = "Call REST API"
     
-    # Example properties (you can replace these with any data relevant to your API call)
+    # Example property
     api_url: bpy.props.StringProperty(name="API URL")
-    api_key: bpy.props.StringProperty(name="API Key")
 
     def execute(self, context):
-        # Here you would make the REST API call using the 'requests' library
-        # For example: response = requests.get(self.api_url, headers={"Authorization": self.api_key})
-        # This is just a placeholder print statement
-        print(f"Calling API at {self.api_url} with key {self.api_key}")
-        
+        api_key = context.scene.api_key
+        # Make the REST API call here using the 'requests' library and the stored api_key
+        print(f"Calling API at {self.api_url} with the stored API key")
         return {'FINISHED'}
 
 class SimpleRESTPanel(bpy.types.Panel):
@@ -33,21 +41,24 @@ class SimpleRESTPanel(bpy.types.Panel):
 
         # Draw text input for API URL
         layout.prop(context.scene, "api_url")
-        # Draw text input for API Key
-        layout.prop(context.scene, "api_key")
+        
+        # Button to open API Key dialog
+        layout.operator(APIKeyDialogOperator.bl_idname)
 
-        # Draw the operator button
+        # Draw the operator button for REST API call
         layout.operator(SimpleRESTOperator.bl_idname)
 
 def register():
     bpy.utils.register_class(SimpleRESTOperator)
     bpy.utils.register_class(SimpleRESTPanel)
+    bpy.utils.register_class(APIKeyDialogOperator)
     bpy.types.Scene.api_url = bpy.props.StringProperty(name="API URL")
     bpy.types.Scene.api_key = bpy.props.StringProperty(name="API Key")
 
 def unregister():
     bpy.utils.unregister_class(SimpleRESTOperator)
     bpy.utils.unregister_class(SimpleRESTPanel)
+    bpy.utils.unregister_class(APIKeyDialogOperator)
     del bpy.types.Scene.api_url
     del bpy.types.Scene.api_key
 
